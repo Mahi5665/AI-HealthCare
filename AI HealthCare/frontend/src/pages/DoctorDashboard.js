@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI, patientAPI } from '../services/api';
 import { Users, Activity, Clock, AlertCircle, LogOut, Search, ChevronRight } from 'lucide-react';
+import AIChat from '../components/AIChat';
 
 function DoctorDashboard() {
   const navigate = useNavigate();
@@ -9,6 +10,8 @@ function DoctorDashboard() {
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
   useEffect(() => {
     loadDashboardData();
@@ -38,6 +41,11 @@ function DoctorDashboard() {
   const handleLogout = () => {
     authAPI.logout();
     navigate('/login');
+  };
+
+  const handlePatientClick = (patient) => {
+    setSelectedPatient(patient);
+    setShowAIChat(true);
   };
 
   const filteredPatients = patients.filter(patient => 
@@ -132,7 +140,11 @@ function DoctorDashboard() {
               <div className="divide-y">
                 {filteredPatients.length > 0 ? (
                   filteredPatients.map((patient) => (
-                    <PatientCard key={patient.id} patient={patient} />
+                    <PatientCard 
+                      key={patient.id} 
+                      patient={patient}
+                      onClick={() => handlePatientClick(patient)}
+                    />
                   ))
                 ) : (
                   <div className="p-8 text-center text-gray-500">
@@ -159,6 +171,14 @@ function DoctorDashboard() {
           </div>
         </div>
       </main>
+
+      {/* AI Chat Modal */}
+      {showAIChat && selectedPatient && (
+        <AIChat
+          patient={selectedPatient}
+          onClose={() => setShowAIChat(false)}
+        />
+      )}
     </div>
   );
 }
@@ -180,9 +200,12 @@ function StatCard({ icon, title, value, subtitle }) {
 }
 
 // Patient Card Component
-function PatientCard({ patient }) {
+function PatientCard({ patient, onClick }) {
   return (
-    <div className="p-4 hover:bg-gray-50 cursor-pointer transition">
+    <div 
+      onClick={onClick}
+      className="p-4 hover:bg-gray-50 cursor-pointer transition"
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">

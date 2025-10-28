@@ -60,3 +60,29 @@ export const patientAPI = {
 };
 
 export default api;
+
+export const aiAPI = {
+  // Generate AI analysis for patient
+  analyzePatient: async (patientId) => {
+    const response = await api.post(`/ai/analyze/${patientId}`);
+    return response.data;
+  },
+
+  // Generate treatment proposal
+  generateProposal: async (patientContext, aiAnalysis) => {
+    const response = await api.post('/ai/proposal', {
+      patient_context: patientContext,
+      ai_analysis: aiAnalysis
+    });
+    return response.data;
+  },
+
+  // Chat with AI
+  chatWithAI: async (conversationHistory, message) => {
+    const response = await api.post('/ai/chat', {
+      conversation_history: conversationHistory,
+      message: message
+    });
+    return response.data;
+  },
+};
