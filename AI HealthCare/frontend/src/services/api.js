@@ -20,6 +20,32 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      // Server responded with error
+      console.error('API Error:', error.response.data);
+     
+      if (error.response.status === 401) {
+        // Unauthorized - redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+    } else if (error.request) {
+      // Request made but no response
+      console.error('Network Error:', error.request);
+    } else {
+      // Something else happened
+      console.error('Error:', error.message);
+    }
+   
+    return Promise.reject(error);
+  }
+);
+
 // API functions
 export const authAPI = {
   // Register new user
@@ -57,9 +83,13 @@ export const patientAPI = {
     const response = await api.get('/patients');
     return response.data;
   },
-};
 
-export default api;
+  // Get single patient details
+  getPatient: async (patientId) => {
+    const response = await api.get(`/patients/${patientId}`);
+    return response.data;
+  },
+};
 
 export const aiAPI = {
   // Generate AI analysis for patient
@@ -86,3 +116,5 @@ export const aiAPI = {
     return response.data;
   },
 };
+
+export default api;

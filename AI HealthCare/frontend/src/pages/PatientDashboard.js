@@ -267,6 +267,27 @@ function HealthDataForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+   
+    // Validation
+    const systolic = parseInt(formData.bloodPressureSystolic);
+    const diastolic = parseInt(formData.bloodPressureDiastolic);
+    const glucose = parseInt(formData.glucose);
+   
+    if (systolic && (systolic < 70 || systolic > 200)) {
+      alert('Blood pressure systolic must be between 70-200');
+      return;
+    }
+   
+    if (diastolic && (diastolic < 40 || diastolic > 130)) {
+      alert('Blood pressure diastolic must be between 40-130');
+      return;
+    }
+   
+    if (glucose && (glucose < 40 || glucose > 400)) {
+      alert('Glucose must be between 40-400 mg/dL');
+      return;
+    }
+   
     console.log('Health data submitted:', formData);
     alert('Health data logged successfully! 🎉');
     setFormData({
