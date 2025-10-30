@@ -2,11 +2,54 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { Heart, Activity, Droplet, Moon, TrendingUp, LogOut, User, Calendar } from 'lucide-react';
+import HealthChart from '../components/HealthChart';
+import AnalyticsSummary from '../components/AnalyticsSummary';
 
 function PatientDashboard() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Mock chart data (7 days)
+  const mockHeartRateData = [
+    { date: 'Mon', heartRate: 72 },
+    { date: 'Tue', heartRate: 75 },
+    { date: 'Wed', heartRate: 70 },
+    { date: 'Thu', heartRate: 73 },
+    { date: 'Fri', heartRate: 71 },
+    { date: 'Sat', heartRate: 74 },
+    { date: 'Sun', heartRate: 72 },
+  ];
+  
+  const mockGlucoseData = [
+    { date: 'Mon', glucose: 165 },
+    { date: 'Tue', glucose: 158 },
+    { date: 'Wed', glucose: 162 },
+    { date: 'Thu', glucose: 155 },
+    { date: 'Fri', glucose: 160 },
+    { date: 'Sat', glucose: 152 },
+    { date: 'Sun', glucose: 148 },
+  ];
+  
+  const mockSleepData = [
+    { date: 'Mon', score: 68 },
+    { date: 'Tue', score: 72 },
+    { date: 'Wed', score: 65 },
+    { date: 'Thu', score: 70 },
+    { date: 'Fri', score: 75 },
+    { date: 'Sat', score: 80 },
+    { date: 'Sun', score: 82 },
+  ];
+  
+  const mockStepsData = [
+    { date: 'Mon', steps: 6543 },
+    { date: 'Tue', steps: 7234 },
+    { date: 'Wed', steps: 5876 },
+    { date: 'Thu', steps: 8123 },
+    { date: 'Fri', steps: 6789 },
+    { date: 'Sat', steps: 9234 },
+    { date: 'Sun', steps: 7654 },
+  ];
 
   useEffect(() => {
     loadUserData();
@@ -109,6 +152,51 @@ function PatientDashboard() {
             </h2>
             <ProfileInfo user={user} />
           </div>
+        </div>
+
+        {/* Weekly Analytics */}
+        <div className="mt-8 mb-8">
+          <AnalyticsSummary
+            title="This Week's Progress"
+            metrics={[
+              { label: 'Average Heart Rate', current: 72, previous: 74, unit: ' bpm', goal: 70 },
+              { label: 'Average Glucose', current: 158, previous: 165, unit: ' mg/dL', goal: 130 },
+              { label: 'Sleep Score', current: 73, previous: 68, unit: '/100', goal: 85 },
+              { label: 'Daily Steps', current: 7350, previous: 6543, unit: '', goal: 10000 },
+            ]}
+          />
+        </div>
+
+        {/* Health Trends Charts */}
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <HealthChart
+            title="Heart Rate Trend (7 Days)"
+            data={mockHeartRateData}
+            dataKey="heartRate"
+            color="#ef4444"
+            unit=" bpm"
+          />
+          <HealthChart
+            title="Blood Glucose (7 Days)"
+            data={mockGlucoseData}
+            dataKey="glucose"
+            color="#8b5cf6"
+            unit=" mg/dL"
+          />
+          <HealthChart
+            title="Sleep Quality (7 Days)"
+            data={mockSleepData}
+            dataKey="score"
+            color="#3b82f6"
+            unit="/100"
+          />
+          <HealthChart
+            title="Steps per Day (7 Days)"
+            data={mockStepsData}
+            dataKey="steps"
+            color="#10b981"
+            unit=""
+          />
         </div>
 
         {/* Recent Activity */}

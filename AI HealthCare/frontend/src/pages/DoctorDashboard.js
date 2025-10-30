@@ -13,6 +13,7 @@ import {
   Clock,
   CheckCircle
 } from 'lucide-react';
+import HealthChart from '../components/HealthChart';
 
 function PatientDetails() {
   const { patientId } = useParams();
