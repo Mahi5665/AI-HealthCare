@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Loader } from 'lucide-react';
 import { aiAPI } from '../services/api';
+import DecisionSummary from './DecisionSummary';
 
 function AIChat({ patient, onClose }) {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [initialAnalysis, setInitialAnalysis] = useState(null);
+  const [showDecisionSummary, setShowDecisionSummary] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -122,12 +124,20 @@ What are your thoughts on these findings, Doctor?`;
                 Discussing: {patient.name} ({patient.condition})
               </p>
             </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg px-4 py-2 transition"
-            >
-              Close
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowDecisionSummary(true)}
+                className="bg-green-500 hover:bg-green-600 text-white rounded-lg px-4 py-2 transition"
+              >
+                Finalize Decision
+              </button>
+              <button
+                onClick={onClose}
+                className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg px-4 py-2 transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
 
@@ -189,6 +199,20 @@ What are your thoughts on these findings, Doctor?`;
           </p>
         </div>
       </div>
+
+      {/* Decision Summary Modal */}
+      {showDecisionSummary && (
+        <DecisionSummary
+          patient={patient}
+          conversation={messages}
+          onClose={() => setShowDecisionSummary(false)}
+          onSave={(decision) => {
+            console.log('Decision saved:', decision);
+            setShowDecisionSummary(false);
+            onClose();
+          }}
+        />
+      )}
     </div>
   );
 }

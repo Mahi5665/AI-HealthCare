@@ -107,3 +107,44 @@ class AIAnalyses(db.Model):
             'confidence_score': float(self.confidence_score) if self.confidence_score else 0,
             'status': self.status
         }
+
+class FinalDecisions(db.Model):
+    """Final collaborative decisions between AI and Doctor"""
+    __tablename__ = 'final_decisions'
+    
+    id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    discussion_id = db.Column(db.String(36))
+    patient_id = db.Column(db.String(36), db.ForeignKey('patients.id'), nullable=False)
+    doctor_id = db.Column(db.String(36), db.ForeignKey('doctors.id'), nullable=False)
+    treatment_plan = db.Column(db.JSON)
+    medications = db.Column(db.JSON)
+    lifestyle_recommendations = db.Column(db.JSON)
+    follow_up_date = db.Column(db.Date)
+    ai_contribution_percent = db.Column(db.Numeric(5, 2))
+    doctor_contribution_percent = db.Column(db.Numeric(5, 2))
+    ai_contributions = db.Column(db.JSON)  # Changed from ARRAY to JSON for better compatibility
+    doctor_contributions = db.Column(db.JSON)  # Changed from ARRAY to JSON for better compatibility
+    decision_confidence = db.Column(db.Numeric(3, 2))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    patient = db.relationship('Patient', backref='decisions')
+    doctor = db.relationship('Doctor', backref='decisions')
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'discussion_id': self.discussion_id,
+            'patient_id': self.patient_id,
+            'doctor_id': self.doctor_id,
+            'treatment_plan': self.treatment_plan,
+            'medications': self.medications,
+            'lifestyle_recommendations': self.lifestyle_recommendations,
+            'follow_up_date': self.follow_up_date.isoformat() if self.follow_up_date else None,
+            'ai_contribution_percent': float(self.ai_contribution_percent) if self.ai_contribution_percent else 0,
+            'doctor_contribution_percent': float(self.doctor_contribution_percent) if self.doctor_contribution_percent else 0,
+            'ai_contributions': self.ai_contributions if self.ai_contributions else [],
+            'doctor_contributions': self.doctor_contributions if self.doctor_contributions else [],
+            'decision_confidence': float(self.decision_confidence) if self.decision_confidence else 0,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }

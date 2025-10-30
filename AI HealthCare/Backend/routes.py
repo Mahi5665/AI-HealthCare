@@ -1,8 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
-from models import db, User, Patient, Doctor
+from models import db, User, Patient, Doctor, AIAnalyses, FinalDecisions
 from datetime import datetime, date
-from models import db, User, Patient, Doctor, AIAnalyses
 
 
 api = Blueprint('api', __name__)
@@ -129,12 +128,10 @@ def get_patients():
             'patients': [p.to_dict() for p in patients]
         }), 200
         
-
-        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
-    from ai_service import ai_analyzer
+
+from ai_service import ai_analyzer
 
 @api.route('/ai/analyze/<patient_id>', methods=['POST'])
 @jwt_required()
@@ -238,6 +235,103 @@ def chat_with_ai():
         return jsonify({
             'message': 'AI response generated',
             'ai_response': ai_response
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ==================== DECISION ENDPOINTS ====================
+
+@api.route('/decisions/create', methods=['POST'])
+@jwt_required()
+def create_decision():
+    """Create final collaborative decision"""
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        
+        if user.role != 'doctor':
+            return jsonify({'error': 'Unauthorized'}), 403
+        
+        data = request.get_json()
+        
+        # Calculate contributions
+        contributions = calculate_contributions(
+            data.get('ai_contributions', []),
+            data.get('doctor_contributions', [])
+        )
+        
+        # Create decision record
+        decision = FinalDecisions(
+            discussion_id=data.get('discussion_id'),
+            patient_id=data.get('patient_id'),
+            doctor_id=user.doctor_profile[0].id if user.doctor_profile else None,
+            treatment_plan=data.get('treatment_plan', {}),
+            medications=data.get('medications', []),
+            lifestyle_recommendations=data.get('lifestyle_recommendations', []),
+            follow_up_date=data.get('follow_up_date'),
+            ai_contribution_percent=contributions['ai_percent'],
+            doctor_contribution_percent=contributions['doctor_percent'],
+            ai_contributions=data.get('ai_contributions', []),
+            doctor_contributions=data.get('doctor_contributions', []),
+            decision_confidence=data.get('confidence', 0.85)
+        )
+        
+        db.session.add(decision)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Decision saved successfully',
+            'decision': decision.to_dict(),
+            'contributions': contributions
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+def calculate_contributions(ai_contributions, doctor_contributions):
+    """Calculate contribution percentages"""
+    # Simple scoring system
+    ai_score = len(ai_contributions) * 10
+    doctor_score = len(doctor_contributions) * 10
+    
+    total_score = ai_score + doctor_score
+    
+    if total_score == 0:
+        return {'ai_percent': 50, 'doctor_percent': 50}
+    
+    return {
+        'ai_percent': round((ai_score / total_score) * 100, 2),
+        'doctor_percent': round((doctor_score / total_score) * 100, 2)
+    }
+
+@api.route('/decisions/<decision_id>', methods=['GET'])
+@jwt_required()
+def get_decision(decision_id):
+    """Get decision details"""
+    try:
+        decision = FinalDecisions.query.get(decision_id)
+        
+        if not decision:
+            return jsonify({'error': 'Decision not found'}), 404
+        
+        return jsonify(decision.to_dict()), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@api.route('/decisions/patient/<patient_id>', methods=['GET'])
+@jwt_required()
+def get_patient_decisions(patient_id):
+    """Get all decisions for a patient"""
+    try:
+        decisions = FinalDecisions.query.filter_by(patient_id=patient_id).order_by(
+            FinalDecisions.created_at.desc()
+        ).all()
+        
+        return jsonify({
+            'decisions': [d.to_dict() for d in decisions]
         }), 200
         
     except Exception as e:
